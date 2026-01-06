@@ -38,9 +38,9 @@ rl.on("line", (line) => {
         const check = typeCheck(parts);
 
         if (check === true) {
-          console.log(`${parts[1]}: is a shell builtin`);
+          console.log(`${parts[1]} is a shell builtin`);
         } else {
-          console.log(`${parts[1]}: not found`);
+          console.log(`${parts[1]} not found`);
         }
         break;
 
