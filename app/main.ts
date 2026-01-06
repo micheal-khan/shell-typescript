@@ -5,12 +5,17 @@ const rl = createInterface({
   output: process.stdout,
 });
 
-// TODO: Uncomment the code below to pass the first stage
-const askQuestion = () => {
-  rl.question("$ ", (command) => {
+rl.setPrompt("$ ");
+rl.prompt();
+
+rl.on("line", (line) => {
+  const command = line.trim();
+  if (command) {
     console.log(`${command}: command not found`);
-  });
-};
-while (true) {
-  askQuestion();
-}
+  }
+  rl.prompt();
+});
+
+rl.on("close", () => {
+  process.exit(0);
+});
