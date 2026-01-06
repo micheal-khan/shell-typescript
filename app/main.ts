@@ -1,3 +1,4 @@
+import fs from "fs";
 import { createInterface } from "readline";
 
 const rl = createInterface({
@@ -10,14 +11,33 @@ rl.prompt();
 
 const builtInCommands = ["echo", "exit", "type"];
 
-const typeCheck = (parts) => {
-  for (let index = 0; index < builtInCommands.length; index++) {
-    const element = builtInCommands[index];
-    if (parts[1] === element) {
-      return true;
+const typeCheck = (parts: any[]) => {
+  const command = parts[1];
+
+  // 1. Built-in check
+  if (builtInCommands.includes(command)) {
+    console.log(`${command} is a shell builtin`);
+    return;
+  }
+
+  // 2. PATH search (only if not built-in)
+  const paths = process.env.PATH || "";
+
+  for (const dir of paths) {
+    const fullPath = `${dir}/${command}`;
+
+    if (fs.existsSync(fullPath)) {
+      try {
+        fs.accessSync(fullPath, fs.constants.X_OK);
+        console.log(`${command} is ${fullPath}`);
+        return;
+      } catch {
+        // exists but not executable → continue
+      }
     }
   }
-  return false;
+
+  console.log(`${command}: not found`);
 };
 
 rl.on("line", (line) => {
@@ -35,13 +55,7 @@ rl.on("line", (line) => {
         break;
 
       case "type":
-        const check = typeCheck(parts);
-
-        if (check === true) {
-          console.log(`${parts[1]} is a shell builtin`);
-        } else {
-          console.log(`${parts[1]} not found`);
-        }
+        typeCheck(parts);
         break;
 
       default:
