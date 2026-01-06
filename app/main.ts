@@ -83,6 +83,7 @@ rl.on("line", (line) => {
 
       const child = spawn(exe, args, {
         stdio: "inherit",
+        argv0: cmd, // 🔥 THIS FIXES IP1
       });
 
       child.on("exit", () => {
