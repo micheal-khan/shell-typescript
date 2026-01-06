@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import { createInterface } from "readline";
 
 const rl = createInterface({
@@ -14,29 +15,29 @@ const builtInCommands = ["echo", "exit", "type"];
 const typeCheck = (parts: any[]) => {
   const command = parts[1];
 
-  // 1. Built-in check
+  // built-in check
   if (builtInCommands.includes(command)) {
     console.log(`${command} is a shell builtin`);
     return;
   }
 
-  // 2. PATH search (only if not built-in)
   const paths = process.env.PATH || "";
 
   for (const dir of paths) {
-    const fullPath = `${dir}/${command}`;
+    const fullPath = path.join(dir, command);
 
     if (fs.existsSync(fullPath)) {
       try {
         fs.accessSync(fullPath, fs.constants.X_OK);
         console.log(`${command} is ${fullPath}`);
-        return;
+        return; // STOP ONLY WHEN FOUND
       } catch {
         // exists but not executable → continue
       }
     }
   }
 
+  // ONLY after checking ALL PATH dirs
   console.log(`${command}: not found`);
 };
 
