@@ -6,7 +6,9 @@ const rl = createInterface({
 });
 
 // TODO: Uncomment the code below to pass the first stage
-rl.question("$ ", (command) => {
-  console.log(`${command}: command not found`);
-  rl.close();
-});
+while (true) {
+  rl.question("$ ", (command) => {
+    console.log(`${command}: command not found`);
+    rl.close();
+  });
+}
