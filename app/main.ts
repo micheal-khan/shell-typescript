@@ -9,6 +9,5 @@ const rl = createInterface({
 while (true) {
   rl.question("$ ", (command) => {
     console.log(`${command}: command not found`);
-    rl.close();
   });
 }
