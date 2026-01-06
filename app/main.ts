@@ -10,7 +10,10 @@ rl.prompt();
 
 rl.on("line", (line) => {
   const command = line.trim();
-  if (command) {
+  if (command === "exit") {
+    rl.close();
+    return;
+  } else if (command) {
     console.log(`${command}: command not found`);
   }
   rl.prompt();
