@@ -6,8 +6,11 @@ const rl = createInterface({
 });
 
 // TODO: Uncomment the code below to pass the first stage
-while (true) {
+const askQuestion = () => {
   rl.question("$ ", (command) => {
     console.log(`${command}: command not found`);
   });
+};
+while (true) {
+  askQuestion();
 }
