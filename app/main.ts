@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { createInterface } from "readline";
+import { spawn } from "child_process";
 
 const rl = createInterface({
   input: process.stdin,
@@ -12,34 +13,38 @@ const builtInCommands = ["echo", "exit", "type"];
 rl.setPrompt("$ ");
 rl.prompt();
 
+const findExecutable = (command: string): string | null => {
+  const paths = process.env.PATH?.split(path.delimiter) || [];
+
+  for (const dir of paths) {
+    const fullPath = path.join(dir, command);
+    if (fs.existsSync(fullPath)) {
+      try {
+        fs.accessSync(fullPath, fs.constants.X_OK);
+        return fullPath;
+      } catch {
+        // not executable
+      }
+    }
+  }
+  return null;
+};
+
 const typeCheck = (parts: string[]) => {
   const command = parts[1];
   if (!command) return;
 
-  // Built-in check
   if (builtInCommands.includes(command)) {
     console.log(`${command} is a shell builtin`);
     return;
   }
 
-  // PATH search (portable: Linux + Windows)
-  const paths = process.env.PATH?.split(path.delimiter) || [];
-
-  for (const dir of paths) {
-    const fullPath = path.join(dir, command);
-
-    if (fs.existsSync(fullPath)) {
-      try {
-        fs.accessSync(fullPath, fs.constants.X_OK);
-        console.log(`${command} is ${fullPath}`);
-        return;
-      } catch {
-        // exists but not executable → continue
-      }
-    }
+  const exe = findExecutable(command);
+  if (exe) {
+    console.log(`${command} is ${exe}`);
+  } else {
+    console.log(`${command}: not found`);
   }
-
-  console.log(`${command}: not found`);
 };
 
 rl.on("line", (line) => {
@@ -50,26 +55,43 @@ rl.on("line", (line) => {
   }
 
   const parts = input.split(/\s+/);
+  const cmd = parts[0];
+  const args = parts.slice(1);
 
-  switch (parts[0]) {
+  switch (cmd) {
     case "echo":
-      console.log(parts.slice(1).join(" "));
+      console.log(args.join(" "));
+      rl.prompt();
       break;
 
     case "exit":
       rl.close();
-      return;
+      break;
 
     case "type":
       typeCheck(parts);
+      rl.prompt();
       break;
 
-    default:
-      console.log(`${input}: command not found`);
+    default: {
+      const exe = findExecutable(cmd);
+      if (!exe) {
+        console.log(`${cmd}: command not found`);
+        rl.prompt();
+        return;
+      }
+
+      const child = spawn(exe, args, {
+        stdio: "inherit",
+      });
+
+      child.on("exit", () => {
+        rl.prompt();
+      });
+
       break;
+    }
   }
-
-  rl.prompt();
 });
 
 rl.on("close", () => {
