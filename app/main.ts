@@ -8,7 +8,7 @@ const rl = createInterface({
   output: process.stdout,
 });
 
-const builtInCommands = ["echo", "exit", "type", "pwd"];
+const builtInCommands = ["echo", "exit", "type", "pwd", "cd"];
 
 rl.setPrompt("$ ");
 rl.prompt();
@@ -59,6 +59,13 @@ rl.on("line", (line) => {
   const args = parts.slice(1);
 
   switch (cmd) {
+    case "cd":
+      process.chdir(args.toString());
+      console.log(process.cwd());
+      rl.prompt();
+
+      break;
+
     case "pwd":
       console.log(process.cwd());
       rl.prompt();
