@@ -60,8 +60,11 @@ rl.on("line", (line) => {
 
   switch (cmd) {
     case "cd":
-      process.chdir(args.toString());
-      console.log(process.cwd());
+      try {
+        process.chdir(args.toString()); // Changes the working directory of the Node.js process
+      } catch (err) {
+        console.error(`${args}: No such file or directory`);
+      }
       rl.prompt();
 
       break;
