@@ -64,7 +64,7 @@ rl.on("line", (line) => {
         if (args.toString() === "~") {
           process.chdir(process.env.HOME || process.env.USERPROFILE || "/");
         } else {
-          process.chdir(args.toString()); // Changes the working directory of the Node.js process
+          process.chdir(args.toString()); // Changes the working directory of the Node.js 
         }
       } catch (err) {
         console.error(`${args}: No such file or directory`);
