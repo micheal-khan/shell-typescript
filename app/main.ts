@@ -59,6 +59,11 @@ rl.on("line", (line) => {
   const args = parts.slice(1);
 
   switch (cmd) {
+    case "pwd":
+      console.log(process.cwd());
+      rl.prompt();
+      break;
+
     case "echo":
       console.log(args.join(" "));
       rl.prompt();
