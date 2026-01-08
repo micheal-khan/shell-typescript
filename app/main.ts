@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 import fs from "fs";
 import path from "path";
 import { parse } from "shell-quote";
@@ -48,6 +50,21 @@ const typeCheck = (parts: string[]) => {
   }
 };
 
+const extractRedirection = (tokens: any[]) => {
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i]?.op === ">") {
+      const file = tokens[i + 1];
+      if (typeof file !== "string") return null;
+
+      return {
+        file,
+        cleanTokens: tokens.slice(0, i),
+      };
+    }
+  }
+  return null;
+};
+
 rl.on("line", (line) => {
   const input = line.trim();
   if (!input) {
@@ -55,7 +72,14 @@ rl.on("line", (line) => {
     return;
   }
 
-  const parts = parse(input) as string[];
+  const parsed = parse(input) as any[];
+
+  const redirection = extractRedirection(parsed);
+
+  const tokens = redirection ? redirection.cleanTokens : parsed;
+
+  const parts = tokens.filter((t) => typeof t === "string");
+
   const cmd = parts[0];
   const args = parts.slice(1);
 
@@ -80,7 +104,14 @@ rl.on("line", (line) => {
       break;
 
     case "echo":
-      console.log(args.join(" "));
+      const output = args.join(" ") + "\n";
+
+      if (redirection) {
+        fs.writeFileSync(redirection.file, output);
+      } else {
+        process.stdout.write(output);
+      }
+
       rl.prompt();
       break;
 
@@ -93,7 +124,7 @@ rl.on("line", (line) => {
       rl.prompt();
       break;
 
-    default: {
+    default:
       const exe = findExecutable(cmd);
       if (!exe) {
         console.log(`${cmd}: command not found`);
@@ -101,9 +132,16 @@ rl.on("line", (line) => {
         return;
       }
 
+      let stdio: any = ["inherit", "inherit", "inherit"];
+
+      if (redirection) {
+        const fd = fs.openSync(redirection.file, "w");
+        stdio[1] = fd; // stdout → file
+      }
+
       const child = spawn(exe, args, {
-        stdio: "inherit",
-        argv0: cmd, // 🔥 THIS FIXES IP1
+        stdio,
+        argv0: cmd,
       });
 
       child.on("exit", () => {
@@ -111,7 +149,6 @@ rl.on("line", (line) => {
       });
 
       break;
-    }
   }
 });
 
