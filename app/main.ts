@@ -52,18 +52,36 @@ const typeCheck = (parts: string[]) => {
 
 const extractRedirection = (tokens: any[]) => {
   for (let i = 0; i < tokens.length; i++) {
+    // case: 1 >
+    if (
+      tokens[i]?.op === ">" &&
+      typeof tokens[i - 1] === "string" &&
+      tokens[i - 1] === "1"
+    ) {
+      const file = tokens[i + 1];
+      if (typeof file !== "string") return null;
+
+      return {
+        file,
+        cleanTokens: tokens.filter((_, idx) => idx !== i && idx !== i - 1 && idx !== i + 1),
+      };
+    }
+
+    // case: >
     if (tokens[i]?.op === ">") {
       const file = tokens[i + 1];
       if (typeof file !== "string") return null;
 
       return {
         file,
-        cleanTokens: tokens.slice(0, i),
+        cleanTokens: tokens.filter((_, idx) => idx !== i && idx !== i + 1),
       };
     }
   }
+
   return null;
 };
+
 
 rl.on("line", (line) => {
   const input = line.trim();
