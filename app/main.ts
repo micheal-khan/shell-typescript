@@ -83,7 +83,7 @@ const extractRedirection = (tokens: any[]) => {
 };
 
 
-rl.on("line", (line) => {
+rl.on("line", (line) => 
   const input = line.trim();
   if (!input) {
     rl.prompt();
