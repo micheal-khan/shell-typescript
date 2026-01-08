@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { parse } from "shell-quote";
 import { createInterface } from "readline";
 import { spawn } from "child_process";
 
@@ -54,7 +55,7 @@ rl.on("line", (line) => {
     return;
   }
 
-  const parts = input.split(/\s+/);
+  const parts = parse(input) as string[];
   const cmd = parts[0];
   const args = parts.slice(1);
 
