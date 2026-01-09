@@ -125,25 +125,26 @@ rl.on("line", (line) => {
       rl.prompt();
       break;
 
-      case "echo": {
-        const output = args.join(" ") + "\n";
-      
-        if (redirection) {
-          if (redirection.fd === 2) {
-            // write to stderr file
-            fs.writeFileSync(redirection.file, output);
-          } else {
-            // write to stdout file
-            fs.writeFileSync(redirection.file, output);
-          }
+    case "echo": {
+      const output = args.join(" ") + "\n";
+
+      if (redirection) {
+        if (redirection.fd === 2) {
+          // write to stderr file
+          fs.writeFileSync(redirection.file, output);
         } else {
-          process.stdout.write(output);
+          // write to stdout file
+          fs.writeFileSync(redirection.file, output);
         }
-      
-        rl.prompt();
-        break;
+      } else {
+        process.stdout.write(output);
       }
-      
+
+      if (!redirection) {
+        rl.prompt();
+      }
+      break;
+    }
 
     case "exit":
       rl.close();
