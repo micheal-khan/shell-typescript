@@ -52,7 +52,23 @@ const typeCheck = (parts: string[]) => {
 
 const extractRedirection = (tokens: any[]) => {
   for (let i = 0; i < tokens.length; i++) {
-    // fd > file  (1> or 2>)
+    // Case: 2> file  OR 1> file  (single operator)
+    if (
+      tokens[i]?.op === "1>" ||
+      tokens[i]?.op === "2>"
+    ) {
+      const fd = tokens[i].op === "2>" ? 2 : 1;
+      const file = tokens[i + 1];
+      if (typeof file !== "string") return null;
+
+      return {
+        fd,
+        file,
+        cleanTokens: tokens.filter((_, idx) => idx !== i && idx !== i + 1),
+      };
+    }
+
+    // Case: 1 > file  OR 2 > file (split tokens)
     if (
       tokens[i]?.op === ">" &&
       typeof tokens[i - 1] === "string" &&
@@ -71,7 +87,7 @@ const extractRedirection = (tokens: any[]) => {
       };
     }
 
-    // > file  (default stdout)
+    // Case: > file (default stdout)
     if (tokens[i]?.op === ">") {
       const file = tokens[i + 1];
       if (typeof file !== "string") return null;
@@ -79,13 +95,17 @@ const extractRedirection = (tokens: any[]) => {
       return {
         fd: 1,
         file,
-        cleanTokens: tokens.filter((_, idx) => idx !== i && idx !== i + 1),
+        cleanTokens: tokens.filter(
+          (_, idx) => idx !== i && idx !== i + 1
+        ),
       };
     }
   }
 
   return null;
 };
+
+
 
 rl.on("line", (line) => {
   const input = line.trim();
