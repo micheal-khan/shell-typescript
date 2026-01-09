@@ -52,27 +52,32 @@ const typeCheck = (parts: string[]) => {
 
 const extractRedirection = (tokens: any[]) => {
   for (let i = 0; i < tokens.length; i++) {
-    // case: 1 >
+    // fd > file  (1> or 2>)
     if (
       tokens[i]?.op === ">" &&
       typeof tokens[i - 1] === "string" &&
-      tokens[i - 1] === "1"
+      (tokens[i - 1] === "1" || tokens[i - 1] === "2")
     ) {
+      const fd = Number(tokens[i - 1]);
       const file = tokens[i + 1];
       if (typeof file !== "string") return null;
 
       return {
+        fd,
         file,
-        cleanTokens: tokens.filter((_, idx) => idx !== i && idx !== i - 1 && idx !== i + 1),
+        cleanTokens: tokens.filter(
+          (_, idx) => idx !== i - 1 && idx !== i && idx !== i + 1
+        ),
       };
     }
 
-    // case: >
+    // > file  (default stdout)
     if (tokens[i]?.op === ">") {
       const file = tokens[i + 1];
       if (typeof file !== "string") return null;
 
       return {
+        fd: 1,
         file,
         cleanTokens: tokens.filter((_, idx) => idx !== i && idx !== i + 1),
       };
@@ -81,7 +86,6 @@ const extractRedirection = (tokens: any[]) => {
 
   return null;
 };
-
 
 rl.on("line", (line) => {
   const input = line.trim();
@@ -142,7 +146,7 @@ rl.on("line", (line) => {
       rl.prompt();
       break;
 
-    default:
+    default: {
       const exe = findExecutable(cmd);
       if (!exe) {
         console.log(`${cmd}: command not found`);
@@ -154,7 +158,7 @@ rl.on("line", (line) => {
 
       if (redirection) {
         const fd = fs.openSync(redirection.file, "w");
-        stdio[1] = fd; // stdout → file
+        stdio[redirection.fd] = fd; // 1 = stdout, 2 = stderr
       }
 
       const child = spawn(exe, args, {
@@ -167,6 +171,7 @@ rl.on("line", (line) => {
       });
 
       break;
+    }
   }
 });
 
