@@ -52,6 +52,38 @@ const typeCheck = (parts: string[]) => {
 
 const extractRedirection = (tokens: any[]) => {
   for (let i = 0; i < tokens.length; i++) {
+    // Case: 1 >> file
+    if (
+      tokens[i]?.op === ">>" &&
+      typeof tokens[i - 1] === "string" &&
+      tokens[i - 1] === "1"
+    ) {
+      const file = tokens[i + 1];
+      if (typeof file !== "string") return null;
+
+      return {
+        fd: 1,
+        append: true,
+        file,
+        cleanTokens: tokens.filter(
+          (_, idx) => idx !== i - 1 && idx !== i && idx !== i + 1
+        ),
+      };
+    }
+
+    // Case: >> file OR 1>> file
+    if (tokens[i]?.op === ">>" || tokens[i]?.op === "1>>") {
+      const file = tokens[i + 1];
+      if (typeof file !== "string") return null;
+
+      return {
+        fd: 1,
+        append: true,
+        file,
+        cleanTokens: tokens.filter((_, idx) => idx !== i && idx !== i + 1),
+      };
+    }
+
     // Case: 2> file  OR 1> file  (single operator)
     if (tokens[i]?.op === "1>" || tokens[i]?.op === "2>") {
       const fd = tokens[i].op === "2>" ? 2 : 1;
@@ -143,11 +175,13 @@ shell.on("line", (line) => {
 
       if (redirection) {
         if (redirection.fd === 1) {
-          // stdout redirected
-          fs.writeFileSync(redirection.file, output);
+          if (redirection.append) {
+            fs.appendFileSync(redirection.file, output);
+          } else {
+            fs.writeFileSync(redirection.file, output);
+          }
         } else {
-          // fd === 2 → echo does NOT write to stderr
-          // create file but write NOTHING
+          // fd === 2 → echo never writes to stderr
           fs.closeSync(fs.openSync(redirection.file, "w"));
           process.stdout.write(output);
         }
