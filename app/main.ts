@@ -76,7 +76,7 @@ const extractRedirection = (tokens: any[]) => {
 
       return {
         fd: 2,
-        append: true,
+        append: false,
         file,
         cleanTokens: tokens.filter(
           (_, idx) => idx !== i - 1 && idx !== i && idx !== i + 1
