@@ -171,7 +171,7 @@ shell.on("line", (line) => {
       break;
 
     case "echo": {
-      const output = args.join(" ") + "\n";
+      const output = args.join(" ").replace(/\s+$/, "") + "\n";
 
       if (redirection) {
         if (redirection.fd === 1) {
