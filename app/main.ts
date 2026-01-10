@@ -52,6 +52,19 @@ const typeCheck = (parts: string[]) => {
 
 const extractRedirection = (tokens: any[]) => {
   for (let i = 0; i < tokens.length; i++) {
+    // Case: 2>> file
+    if (tokens[i]?.op === "2>>") {
+      const file = tokens[i + 1];
+      if (typeof file !== "string") return null;
+
+      return {
+        fd: 2,
+        append: true,
+        file,
+        cleanTokens: tokens.filter((_, idx) => idx !== i && idx !== i + 1),
+      };
+    }
+
     // Case: 1 >> file
     if (
       tokens[i]?.op === ">>" &&
@@ -215,7 +228,6 @@ shell.on("line", (line) => {
       if (redirection) {
         const flags = redirection.append ? "a" : "w";
         const fd = fs.openSync(redirection.file, flags);
-        stdio[redirection.fd] = fd;
       }
 
       const child = spawn(exe, args, {
