@@ -213,8 +213,9 @@ shell.on("line", (line) => {
       let stdio: any = ["inherit", "inherit", "inherit"];
 
       if (redirection) {
-        const fd = fs.openSync(redirection.file, "w");
-        stdio[redirection.fd] = fd; // 1 = stdout, 2 = stderr
+        const flags = redirection.append ? "a" : "w";
+        const fd = fs.openSync(redirection.file, flags);
+        stdio[redirection.fd] = fd;
       }
 
       const child = spawn(exe, args, {
