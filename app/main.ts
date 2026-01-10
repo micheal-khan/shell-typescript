@@ -53,10 +53,7 @@ const typeCheck = (parts: string[]) => {
 const extractRedirection = (tokens: any[]) => {
   for (let i = 0; i < tokens.length; i++) {
     // Case: 2> file  OR 1> file  (single operator)
-    if (
-      tokens[i]?.op === "1>" ||
-      tokens[i]?.op === "2>"
-    ) {
+    if (tokens[i]?.op === "1>" || tokens[i]?.op === "2>") {
       const fd = tokens[i].op === "2>" ? 2 : 1;
       const file = tokens[i + 1];
       if (typeof file !== "string") return null;
@@ -95,17 +92,13 @@ const extractRedirection = (tokens: any[]) => {
       return {
         fd: 1,
         file,
-        cleanTokens: tokens.filter(
-          (_, idx) => idx !== i && idx !== i + 1
-        ),
+        cleanTokens: tokens.filter((_, idx) => idx !== i && idx !== i + 1),
       };
     }
   }
 
   return null;
 };
-
-
 
 rl.on("line", (line) => {
   const input = line.trim();
@@ -150,19 +143,18 @@ rl.on("line", (line) => {
 
       if (redirection) {
         if (redirection.fd === 2) {
-          // write to stderr file
+          // CodeCrafters behavior: echo still prints to stdout
+          process.stdout.write(output);
           fs.writeFileSync(redirection.file, output);
         } else {
-          // write to stdout file
+          // stdout redirected
           fs.writeFileSync(redirection.file, output);
         }
       } else {
         process.stdout.write(output);
       }
 
-      if (!redirection) {
-        rl.prompt();
-      }
+      rl.prompt();
       break;
     }
 
