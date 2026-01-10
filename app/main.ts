@@ -52,8 +52,12 @@ const typeCheck = (parts: string[]) => {
 
 const extractRedirection = (tokens: any[]) => {
   for (let i = 0; i < tokens.length; i++) {
-    // Case: 2>> file (single operator)
-    if (tokens[i]?.op === "2>>") {
+    // Case: 2 >> file (split tokens)
+    if (
+      tokens[i]?.op === ">>" &&
+      typeof tokens[i - 1] === "string" &&
+      tokens[i - 1] === "2"
+    ) {
       const file = tokens[i + 1];
       if (typeof file !== "string") return null;
 
@@ -61,7 +65,9 @@ const extractRedirection = (tokens: any[]) => {
         fd: 2,
         append: true,
         file,
-        cleanTokens: tokens.filter((_, idx) => idx !== i && idx !== i + 1),
+        cleanTokens: tokens.filter(
+          (_, idx) => idx !== i - 1 && idx !== i && idx !== i + 1
+        ),
       };
     }
 
