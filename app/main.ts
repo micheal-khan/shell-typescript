@@ -6,15 +6,15 @@ import { parse } from "shell-quote";
 import { createInterface } from "readline";
 import { spawn } from "child_process";
 
-const rl = createInterface({
+const shell = createInterface({
   input: process.stdin,
   output: process.stdout,
 });
 
 const builtInCommands = ["echo", "exit", "type", "pwd", "cd"];
 
-rl.setPrompt("$ ");
-rl.prompt();
+shell.setPrompt("$ ");
+shell.prompt();
 
 const findExecutable = (command: string): string | null => {
   const paths = process.env.PATH?.split(path.delimiter) || [];
@@ -100,10 +100,10 @@ const extractRedirection = (tokens: any[]) => {
   return null;
 };
 
-rl.on("line", (line) => {
+shell.on("line", (line) => {
   const input = line.trim();
   if (!input) {
-    rl.prompt();
+    shell.prompt();
     return;
   }
 
@@ -129,49 +129,50 @@ rl.on("line", (line) => {
       } catch (err) {
         console.error(`${args}: No such file or directory`);
       }
-      rl.prompt();
+      shell.prompt();
 
       break;
 
     case "pwd":
       console.log(process.cwd());
-      rl.prompt();
+      shell.prompt();
       break;
 
     case "echo": {
       const output = args.join(" ") + "\n";
 
       if (redirection) {
-        if (redirection.fd === 2) {
-          // CodeCrafters behavior: echo still prints to stdout
-          process.stdout.write(output);
-          fs.writeFileSync(redirection.file, output);
-        } else {
+        if (redirection.fd === 1) {
           // stdout redirected
           fs.writeFileSync(redirection.file, output);
+        } else {
+          // fd === 2 → echo does NOT write to stderr
+          // create file but write NOTHING
+          fs.closeSync(fs.openSync(redirection.file, "w"));
+          process.stdout.write(output);
         }
       } else {
         process.stdout.write(output);
       }
 
-      rl.prompt();
+      shell.prompt();
       break;
     }
 
     case "exit":
-      rl.close();
+      shell.close();
       break;
 
     case "type":
       typeCheck(parts);
-      rl.prompt();
+      shell.prompt();
       break;
 
     default: {
       const exe = findExecutable(cmd);
       if (!exe) {
         console.log(`${cmd}: command not found`);
-        rl.prompt();
+        shell.prompt();
         return;
       }
 
@@ -188,7 +189,7 @@ rl.on("line", (line) => {
       });
 
       child.on("exit", () => {
-        rl.prompt();
+        shell.prompt();
       });
 
       break;
@@ -196,6 +197,6 @@ rl.on("line", (line) => {
   }
 });
 
-rl.on("close", () => {
+shell.on("close", () => {
   process.exit(0);
 });
