@@ -52,7 +52,7 @@ const typeCheck = (parts: string[]) => {
 
 const extractRedirection = (tokens: any[]) => {
   for (let i = 0; i < tokens.length; i++) {
-    // Case: 2>> file
+    // Case: 2>> file (single operator)
     if (tokens[i]?.op === "2>>") {
       const file = tokens[i + 1];
       if (typeof file !== "string") return null;
